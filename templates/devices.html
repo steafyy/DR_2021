@@ -1,0 +1,46 @@
+{% extends 'layout.html' %}
+
+{% block body %}
+
+	<!--<div class="ui inverted mastered center aligned segment">-->
+	
+	<div class="ui column padded centered grid" style="background-color: #7ac2e1">
+			<div class="ui link cards">
+			{% for d in devs %}
+			
+				<div class="ui column card">
+					<div class="image">
+					    <img src="/images/avatar2/large/kristy.png">
+					</div>
+					<div class="content">
+					    <a class="header">{{d.dev_name}}</a>
+					  
+					    <div class="meta">
+							<span class="date">{{d.ip}}</span>
+						</div>
+					  
+					    <div class="description">{{d.system}}</div>
+					</div>
+					
+					<div class="extra content">
+					    <span class="right floated">{{d.mac}}</span>
+					    <span>
+						    <i class="user icon"></i>{{d.status}}
+					  	</span>
+					</div>
+
+                    <div class="extra content">
+					    <span class="right floated">{{d.mac}}</span>
+					    <span>
+						    <i class="user icon"></i>{{d.status}}
+					  	</span>
+					</div>
+				</div>
+			{% endfor %}
+			</div>
+
+	</div>
+
+
+
+{% endblock %}

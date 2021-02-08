@@ -1,0 +1,21 @@
+{% extends 'layout.html' %}
+
+{% block body %}
+  {% from "includes/_formhelpers.html" import render_field %}
+  <h1>Add Risk</h1>
+  <form class="ui form "method="POST" action="">
+    <div class="field">
+      <label>Name</label>
+      {{ render_field(form.name, class_="form-control") }}
+    </div>
+    <div class="field">
+       <label>Potential</label>
+      {{ render_field(form.potential, class_="form-control", id="editor") }}
+    </div>
+    <div class="field">
+      <label>Description</label>
+      {{ render_field(form.description, class_="form-control", id="editor") }}
+    </div>
+    <p><input class="ui button" type="submit" value="Submit">
+  </form>
+{% endblock %}
