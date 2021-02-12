@@ -1,16 +1,16 @@
-<div class="ui inverted segment">
-	<div class="ui huge inverted secondary pointing menu">
-		<a class="active item" href="/">
-		  Welcome
-		</a>
-		<a class="item" href="/devices">
-		  Devices
-		</a>
-		<a class="item" href="/risks">
-		  Risks
-		</a>
-        <a class="item" href="/groups">
-		  Groups
-		</a>
-	</div>
+<div class="ui massive menu">
+  <a class="item" href="/">Welcome</a>
+  <a class="item" href="/devices">Devices</a>
+  <a class="item" href="/risks">Risks</a>
+
+
+  <div class="right menu">
+      {% if session.logged_in %}
+          <a class="item" href="/logout">Logout</a>
+      {% else %}
+          <a class="item" href="login">Login</a>
+          <a class="item" href="/register">Register</a>
+      {% endif %}
+
+  </div>
 </div>
