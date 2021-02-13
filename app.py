@@ -1,3 +1,5 @@
+import nmap
+import sys
 from functools import wraps
 
 from flask import Flask, render_template, request, url_for, redirect, flash, session
@@ -7,7 +9,7 @@ from passlib.hash import sha256_crypt
 from wtforms import Form, StringField, TextAreaField, PasswordField, validators
 
 import _thread
-from scan import scan_net
+#from scan import scan_net
 
 app = Flask(__name__)
 
@@ -38,24 +40,18 @@ def get_db_connection():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        # Get Form Fields
         username = request.form['username']
         password_candidate = request.form['password']
 
-        # Create cursor
         cur = mysql.connection.cursor()
 
-        # Get user by username
         result = cur.execute("SELECT * FROM users WHERE username = %s", [username])
 
         if result > 0:
-            # Get stored hash
             data = cur.fetchone()
             password = data['password']
 
-            # Compare Passwords
             if sha256_crypt.verify(password_candidate, password):
-                # Passed
                 session['logged_in'] = True
                 session['username'] = username
 
@@ -149,8 +145,6 @@ def devices():
 class RiskForm(Form):
     name = StringField('Name', [validators.Length(min=1, max=200)])
     description = TextAreaField('Description')
-    #potential = StringField('Rate', [validators.Length(min=1)])
-    #impact = StringField('Impact', [validators.Length(min=1)])
 
 
 @app.route('/add_risk', methods=['GET', 'POST'])
@@ -160,12 +154,9 @@ def add_risk():
     if request.method == 'POST' and form.validate():
         name = form.name.data
         description = form.description.data
-        #potential = form.potential.data
 
         conn = get_db_connection()
 
-        # Execute
-        #conn.execute("INSERT INTO risks(name, description, potential, impact) VALUES(%s, %s, %s, %s)", (name, description, potential, impact))
         conn.execute("INSERT INTO risks(name, description) VALUES(%s, %s)",
                      (name, description))
 
@@ -183,36 +174,25 @@ def add_risk():
 @app.route('/edit_risk/<string:id>', methods=['GET', 'POST'])
 @is_logged_in
 def edit_risk(id):
-    # Create cursor
     cur = mysql.connection.cursor()
 
-    # Get article by id
     result = cur.execute("SELECT * FROM risks WHERE id = %s", [id])
 
     risk = cur.fetchone()
     cur.close()
-    # Get form
+
     form = RiskForm(request.form)
 
     name = form.name.data
     description = form.description.data
-    # Populate article form fields
-    #form.name.data = risk['name']
-    #form.description.data = risk['descrition']
 
     if request.method == 'POST' and form.validate():
-        #title = request.form['title']
-        #body = request.form['body']
-
-        # Create Cursor
         cur = mysql.connection.cursor()
-        #app.logger.info(title)
-        # Execute
-        cur.execute ("UPDATE risks SET name =%s, description=%s WHERE id=%s", (name, description, id))
-        # Commit to DB
+
+        cur.execute("UPDATE risks SET name =%s, description=%s WHERE id=%s", (name, description, id))
+
         mysql.connection.commit()
 
-        #Close connection
         cur.close()
 
         flash('Risk Updated', 'success')
@@ -246,14 +226,12 @@ def risks():
 
     all_risks = conn.fetchall()
 
-    #if result > 0:
     return render_template('risks.html', risks=all_risks)
 
 
 @app.route('/groups', methods=['POST', 'GET'])
 @is_logged_in
 def groups():
-    #print(groups)
     return render_template('groups.html', groups=dev_groups)
 
 
@@ -269,12 +247,8 @@ def create_group():
     group = []
 
     if request.method == 'POST':
-        #print("ghjk")
         group = request.form.getlist('mychek')
-        #print(request.form.getlist('mychek'))
-        #return 'Done'
         dev_groups.append(group)
-        #print(dev_groups)
         return render_template("groups.html", groups=dev_groups)
 
     return render_template("create_group.html", devs=devs)
@@ -286,16 +260,62 @@ def group():
     return render_template('group.html')
 
 
-@app.route('/scan')
+class NetworkForm(Form):
+    net = StringField('Network IP', [validators.Length(min=1, max=20)])
+
+
+def scan_net(net):
+    nmScan = nmap.PortScanner()
+
+    #nmScan.scan('192.168.1.0/24')
+    #nmScan.scan(net)
+
+    nmScan.scan(net)
+
+    conn = get_db_connection()
+
+    for host in nmScan.all_hosts():
+        #print(sys.getsizeof(host))
+
+        #print(sys.getsizeof(nmScan[host].hostname()))
+        conn.execute("INSERT INTO devices(net, ip) VALUES(%s, %s)", (net, host))
+
+        mysql.connection.commit()
+
+        print('Host : %s (%s)' % (host, nmScan[host].hostname()))
+        print('State : %s' % nmScan[host].state())
+        for proto in nmScan[host].all_protocols():
+            print('Protocol : %s' % proto)
+
+            lport = nmScan[host][proto].keys()
+            #lport.sort()
+            for port in lport:
+                print('port : %s\tstate : %s' % (port, nmScan[host][proto][port]['state']))
+
+        print('----------')
+
+
+    conn.close()
+
+@app.route('/scan', methods=['GET', 'POST'])
 def scan():
- #   thread.start_new_thread(scan_net())
-    #return 0
-    return render_template('scan.html')
+    form = NetworkForm(request.form)
+
+    net = form.net.data
+
+    if request.method == 'POST' and form.validate():
+        scan_net(net)
+
+        return redirect(url_for('devices'))
+
+    return render_template('scan.html', form=form)
 
 
 if __name__ == '__main__':
-    #_thread.start_new_thread(scan_net())
 
     app.secret_key = 'super secret key'
     app.run(host='127.0.0.1', debug=True)
+    print("gtf")
+    #_thread.start_new_thread(scan_net(), ('192.168.1.0/24', ))
+    print("gtf2")
 
