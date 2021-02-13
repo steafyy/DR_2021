@@ -5,14 +5,18 @@
     <table class="ui celled table">
       <thead>
         <tr><th>Name</th>
-        <th>Potential</th>
+        <th>Description</th>
       </tr></thead>
       <tbody>
       {% for risk in risks %}
         <tr>
           <td data-label="Name">{{ risk.name }}</td>
-          <td data-label="Potential">{{ risk.potential }}</td>
-          <td>
+          <td data-label="Description">{{ risk.description }}</td>
+        </tr>
+        <td>
+          <button class="ui centered button"><a href="edit_risk/{{ risk.id }}">Edit risk</a></button>
+        </td>
+        <td>
           <form action="{{url_for('delete_risk', id=risk.id)}}" method="post">
             <input type="hidden" name="_method" value="DELETE">
             <input type="submit" value="Delete" class="btn btn-danger">

@@ -1,46 +1,36 @@
 {% extends 'layout.html' %}
 
 {% block body %}
+  <h1>Devices
+      <br>
+      <small> Hello there, {{session.username}}</small>
+  </h1>
 
-	<!--<div class="ui inverted mastered center aligned segment">-->
-	
-	<div class="ui column padded centered grid" style="background-color: #7ac2e1">
-			<div class="ui link cards">
-			{% for d in devs %}
-			
-				<div class="ui column card">
-					<div class="image">
-					    <img src="/images/avatar2/large/kristy.png">
-					</div>
-					<div class="content">
-					    <a class="header">{{d.dev_name}}</a>
-					  
-					    <div class="meta">
-							<span class="date">{{d.ip}}</span>
-						</div>
-					  
-					    <div class="description">{{d.system}}</div>
-					</div>
-					
-					<div class="extra content">
-					    <span class="right floated">{{d.mac}}</span>
-					    <span>
-						    <i class="user icon"></i>{{d.status}}
-					  	</span>
-					</div>
+  <hr>
+  <table class="ui table">
+    <tr>
+      <th>ID</th>
+      <th>Name</th>
+      <th>IP</th>
+      <th>OS</th>
+      <th></th>
+      <th></th>
+    </tr>
+    {% for dev in devs %}
+      <tr>
+        <td>{{dev.id}}</td>
+        <td>{{dev.dev_name}}</td>
+        <td>{{dev.ip}}</td>
+        <td>{{dev.system}}</td>
 
-                    <div class="extra content">
-					    <span class="right floated">{{d.mac}}</span>
-					    <span>
-						    <i class="user icon"></i>{{d.status}}
-					  	</span>
-					</div>
-				</div>
-			{% endfor %}
-			</div>
-
-	</div>
-
-
-
+        </td>
+      </tr>
+    {% endfor %}
+  </table>
 {% endblock %}
+
+        <td><!--
+          <form action="{{url_for('delete_device', id=dev.id)}}" method="post">
+            <input type="hidden" name="_method" value="DELETE">
+            <input type="submit" value="Delete" class="ui button">
+          </form>--!>
