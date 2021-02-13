@@ -1,10 +1,13 @@
-from flask import Flask, render_template, request, url_for, redirect, flash, session
-from flask_mysqldb import MySQL
-#from data import Groups
-from passlib.hash import sha256_crypt
-from wtforms import Form, StringField, TextAreaField, PasswordField, validators
 from functools import wraps
 
+from flask import Flask, render_template, request, url_for, redirect, flash, session
+from flask_mysqldb import MySQL
+
+from passlib.hash import sha256_crypt
+from wtforms import Form, StringField, TextAreaField, PasswordField, validators
+
+import _thread
+from scan import scan_net
 
 app = Flask(__name__)
 
@@ -146,7 +149,8 @@ def devices():
 class RiskForm(Form):
     name = StringField('Name', [validators.Length(min=1, max=200)])
     description = TextAreaField('Description')
-    potential = StringField('Rate', [validators.Length(min=1, max=200)])
+    #potential = StringField('Rate', [validators.Length(min=1)])
+    #impact = StringField('Impact', [validators.Length(min=1)])
 
 
 @app.route('/add_risk', methods=['GET', 'POST'])
@@ -156,12 +160,14 @@ def add_risk():
     if request.method == 'POST' and form.validate():
         name = form.name.data
         description = form.description.data
-        potential = form.potential.data
+        #potential = form.potential.data
 
         conn = get_db_connection()
 
         # Execute
-        conn.execute("INSERT INTO risks(name, description, potential) VALUES(%s, %s, %s)", (name, description, potential))
+        #conn.execute("INSERT INTO risks(name, description, potential, impact) VALUES(%s, %s, %s, %s)", (name, description, potential, impact))
+        conn.execute("INSERT INTO risks(name, description) VALUES(%s, %s)",
+                     (name, description))
 
         mysql.connection.commit()
 
@@ -172,6 +178,48 @@ def add_risk():
         return redirect(url_for('risks'))
 
     return render_template('add_risk.html', form=form)
+
+
+@app.route('/edit_risk/<string:id>', methods=['GET', 'POST'])
+@is_logged_in
+def edit_risk(id):
+    # Create cursor
+    cur = mysql.connection.cursor()
+
+    # Get article by id
+    result = cur.execute("SELECT * FROM risks WHERE id = %s", [id])
+
+    risk = cur.fetchone()
+    cur.close()
+    # Get form
+    form = RiskForm(request.form)
+
+    name = form.name.data
+    description = form.description.data
+    # Populate article form fields
+    #form.name.data = risk['name']
+    #form.description.data = risk['descrition']
+
+    if request.method == 'POST' and form.validate():
+        #title = request.form['title']
+        #body = request.form['body']
+
+        # Create Cursor
+        cur = mysql.connection.cursor()
+        #app.logger.info(title)
+        # Execute
+        cur.execute ("UPDATE risks SET name =%s, description=%s WHERE id=%s", (name, description, id))
+        # Commit to DB
+        mysql.connection.commit()
+
+        #Close connection
+        cur.close()
+
+        flash('Risk Updated', 'success')
+
+        return redirect(url_for('risks'))
+
+    return render_template('edit_risk.html', form=form)
 
 
 @app.route('/delete/<string:id>', methods=['POST'])
@@ -238,6 +286,16 @@ def group():
     return render_template('group.html')
 
 
+@app.route('/scan')
+def scan():
+ #   thread.start_new_thread(scan_net())
+    #return 0
+    return render_template('scan.html')
+
+
 if __name__ == '__main__':
+    #_thread.start_new_thread(scan_net())
+
     app.secret_key = 'super secret key'
-    app.run(debug=True)
+    app.run(host='127.0.0.1', debug=True)
+
