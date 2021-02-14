@@ -1,5 +1,4 @@
-import nmap
-import sys
+import os, nmap
 from functools import wraps
 
 from flask import Flask, render_template, request, url_for, redirect, flash, session
@@ -8,21 +7,16 @@ from flask_mysqldb import MySQL
 from passlib.hash import sha256_crypt
 from wtforms import Form, StringField, TextAreaField, PasswordField, validators
 
-import _thread
-#from scan import scan_net
 
 app = Flask(__name__)
 
-
-dev_groups = []
-
+app.secret_key = os.urandom(24)
 
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
 app.config['MYSQL_PASSWORD'] = 'password'
-app.config['MYSQL_DB'] = 'try'
+app.config['MYSQL_DB'] = 'DR_2021'
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
-
 
 mysql = MySQL(app)
 
@@ -30,11 +24,6 @@ mysql = MySQL(app)
 @app.route('/')
 def main():
     return render_template("index.html")
-
-
-def get_db_connection():
-    cur = mysql.connection.cursor()
-    return cur
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -89,8 +78,6 @@ def logout():
 
 
 class RegisterForm(Form):
-    name = StringField('Name', [validators.Length(min=1, max=50)])
-    email = StringField('Email', [validators.Length(min=6, max=50)])
     username = StringField('Username', [validators.Length(min=4, max=25)])
     password = PasswordField('Password', [
         validators.DataRequired(),
@@ -103,15 +90,13 @@ class RegisterForm(Form):
 def register():
     form = RegisterForm(request.form)
     if request.method == 'POST' and form.validate():
-        name = form.name.data
-        email = form.email.data
         username = form.username.data
         password = sha256_crypt.encrypt(str(form.password.data))
 
         cur = mysql.connection.cursor()
 
-        cur.execute("INSERT INTO users(name, email, username, password) VALUES(%s, %s, %s, %s)",
-                    (name, email, username, password))
+        cur.execute("INSERT INTO users(username, password) VALUES(%s, %s)",
+                    (username, password))
 
         mysql.connection.commit()
 
@@ -121,25 +106,6 @@ def register():
 
         return redirect(url_for('login'))
     return render_template('register.html', form=form)
-
-
-@app.route('/devices')
-@is_logged_in
-def devices():
-    conn = get_db_connection()
-
-    result = conn.execute("SELECT * FROM devices")
-
-    devs = conn.fetchall()
-
-    if result > 0:
-        return render_template('devices.html', devs=devs)
-
-    else:
-        msg = "No devices found"
-        return render_template('devices.html', msg=msg)
-
-    conn.close()
 
 
 class RiskForm(Form):
@@ -155,7 +121,7 @@ def add_risk():
         name = form.name.data
         description = form.description.data
 
-        conn = get_db_connection()
+        conn = mysql.connection.cursor()
 
         conn.execute("INSERT INTO risks(name, description) VALUES(%s, %s)",
                      (name, description))
@@ -205,7 +171,7 @@ def edit_risk(id):
 @app.route('/delete/<string:id>', methods=['POST'])
 def delete_risk(id):
 
-    conn = get_db_connection()
+    conn = mysql.connection.cursor()
 
     conn.execute("DELETE FROM risks WHERE id = %s", [id])
 
@@ -220,7 +186,7 @@ def delete_risk(id):
 
 @app.route('/risks')
 def risks():
-    conn = get_db_connection()
+    conn = mysql.connection.cursor()
 
     result = conn.execute("SELECT * FROM risks")
 
@@ -229,16 +195,13 @@ def risks():
     return render_template('risks.html', risks=all_risks)
 
 
-@app.route('/groups', methods=['POST', 'GET'])
-@is_logged_in
-def groups():
-    return render_template('groups.html', groups=dev_groups)
+dev_groups = []
 
 
 @app.route('/create_group', methods=['GET', 'POST'])
 @is_logged_in
 def create_group():
-    conn = get_db_connection()
+    conn = mysql.connection.cursor()
 
     conn.execute("SELECT * FROM devices")
 
@@ -248,6 +211,7 @@ def create_group():
 
     if request.method == 'POST':
         group = request.form.getlist('mychek')
+        print(group[0])
         dev_groups.append(group)
         return render_template("groups.html", groups=dev_groups)
 
@@ -260,62 +224,84 @@ def group():
     return render_template('group.html')
 
 
+@app.route('/groups', methods=['POST', 'GET'])
+@is_logged_in
+def groups():
+    return render_template('groups.html', groups=dev_groups)
+
+
+@app.route('/devices')
+@is_logged_in
+def devices():
+    conn = mysql.connection.cursor()
+
+    #result = conn.execute("SELECT * FROM devices INNER JOIN networks ON net=address INNER JOIN users ON user=username WHERE user=%s", [session['username']])
+                          # WHERE address = %s", session['username'])
+
+    result = conn.execute(
+        "SELECT * FROM devices INNER JOIN networks ON net=address INNER JOIN users ON user=username WHERE user=%s",
+        [session['username']])
+
+    conn.execute("SELECT * FROM networks INNER JOIN users ON user=username WHERE user=%s", [session['username']])
+
+    devs = []
+
+    nets = conn.fetchall()
+
+    for n in nets:
+        conn.execute("SELECT * FROM devices WHERE  net=%s", [n['address']])
+        d = conn.fetchall()
+        devs.append(d)
+
+    if len(devs) != 0:
+        return render_template('devices.html', devs=devs)
+
+    else:
+        msg = "No devices found"
+        return render_template('devices.html', msg=msg)
+
+
 class NetworkForm(Form):
     net = StringField('Network IP', [validators.Length(min=1, max=20)])
+    #prefix = StringField('Prefix')
 
 
 def scan_net(net):
-    nmScan = nmap.PortScanner()
+    nmscan = nmap.PortScanner()
 
-    #nmScan.scan('192.168.1.0/24')
-    #nmScan.scan(net)
+    nmscan.scan(net)
 
-    nmScan.scan(net)
+    conn = mysql.connection.cursor()
 
-    conn = get_db_connection()
+    for host in nmscan.all_hosts():
+        conn.execute("INSERT IGNORE INTO networks(address, user) VALUES(%s, %s)", (net, session['username']))
 
-    for host in nmScan.all_hosts():
-        #print(sys.getsizeof(host))
+        print(net, nmscan[host].hostname(), host)
 
-        #print(sys.getsizeof(nmScan[host].hostname()))
-        conn.execute("INSERT INTO devices(net, ip) VALUES(%s, %s)", (net, host))
+        conn.execute("INSERT INTO devices(ip, hostname, mac, os, net) VALUES(%s, %s, %s, %s, %s)", (host, nmscan[host].hostname(), 'unav', 'unav', net))
+
+        #conn.execute("SELECT * FROM devices ORDER_BY net")
 
         mysql.connection.commit()
 
-        print('Host : %s (%s)' % (host, nmScan[host].hostname()))
-        print('State : %s' % nmScan[host].state())
-        for proto in nmScan[host].all_protocols():
-            print('Protocol : %s' % proto)
-
-            lport = nmScan[host][proto].keys()
-            #lport.sort()
-            for port in lport:
-                print('port : %s\tstate : %s' % (port, nmScan[host][proto][port]['state']))
-
-        print('----------')
-
-
     conn.close()
 
+
 @app.route('/scan', methods=['GET', 'POST'])
+@is_logged_in
 def scan():
     form = NetworkForm(request.form)
 
     net = form.net.data
+    #prefix = form.prefix.data
 
     if request.method == 'POST' and form.validate():
         scan_net(net)
-
+        #v edna sesiq ne stava poveche ot 1 skanirane?
         return redirect(url_for('devices'))
 
     return render_template('scan.html', form=form)
 
 
 if __name__ == '__main__':
-
-    app.secret_key = 'super secret key'
-    app.run(host='127.0.0.1', debug=True)
-    print("gtf")
-    #_thread.start_new_thread(scan_net(), ('192.168.1.0/24', ))
-    print("gtf2")
-
+    app.run()
