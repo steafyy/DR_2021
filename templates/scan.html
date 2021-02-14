@@ -1,7 +1,17 @@
 {% extends 'layout.html' %}
 
 {% block body %}
+  <h1>Network to scan</h1>
 
+  {% from "includes/_formhelpers.html" import render_field %}
+
+  <form method="POST" action="" class="ui form">
+    <div class="field">
+      {{ render_field(form.net, class_="form-control") }}
+    </div>
+
+    <p><input class="ui button" type="submit" value="Submit">
+  </form>
 
 {% endblock %}
 

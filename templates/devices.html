@@ -1,36 +1,36 @@
 {% extends 'layout.html' %}
 
 {% block body %}
-  <h1>Devices
-      <br>
+  <h1>
       <small> Hello there, {{session.username}}</small>
   </h1>
 
   <hr>
+  {% for dev in devs %}
+  <h2>Network {{ dev[0].net }}</h2>
   <table class="ui table">
     <tr>
-      <th>ID</th>
       <th>Name</th>
       <th>IP</th>
+      <th>MAC</th>
       <th>OS</th>
       <th></th>
       <th></th>
     </tr>
-    {% for dev in devs %}
+    {% for d in dev %}
       <tr>
-        <td>{{dev.id}}</td>
-        <td>{{dev.dev_name}}</td>
-        <td>{{dev.ip}}</td>
-        <td>{{dev.system}}</td>
-
+        <td>{{d.hostname}}</td>
+        <td>{{d.ip}}</td>
+        <td>{{d.mac}}</td>
+        <td>{{d.os}}</td>
         </td>
       </tr>
     {% endfor %}
   </table>
-{% endblock %}
+  <br>
+  {% endfor %}
+    <a href="create_group" class="ui button">Create new group</a>
 
-        <td><!--
-          <form action="{{url_for('delete_device', id=dev.id)}}" method="post">
-            <input type="hidden" name="_method" value="DELETE">
-            <input type="submit" value="Delete" class="ui button">
-          </form>--!>
+    <a href="groups" class="ui button">Groups</a>
+
+{% endblock %}

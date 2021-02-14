@@ -3,8 +3,8 @@
 {% block body %}
     <form method="POST" action="/create_group">
         {% for d in devs %}
-            {{ d.dev_name }}
-            <input type="checkbox" value={{ d.dev_name }} name="mychek">
+            {{ d.ip }}
+            <input type="checkbox" value={{ d.ip }} name="mychek">
         {% endfor %}
         <input type="submit" value="Create new group">
     </form>
