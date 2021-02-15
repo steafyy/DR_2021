@@ -218,6 +218,13 @@ def create_group():
     return render_template("create_group.html", devs=devs)
 
 
+@app.route('/edit_group', methods=['GET', 'POST'])
+@is_logged_in
+def edit_group():
+
+    return render_template("edit_group.html")
+
+
 @app.route('/group')
 @is_logged_in
 def group():
