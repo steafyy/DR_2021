@@ -7,7 +7,6 @@ from flask_mysqldb import MySQL
 from passlib.hash import sha256_crypt
 from wtforms import Form, StringField, TextAreaField, PasswordField, validators
 
-
 app = Flask(__name__)
 
 app.secret_key = os.urandom(24)
@@ -15,15 +14,17 @@ app.secret_key = os.urandom(24)
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
 app.config['MYSQL_PASSWORD'] = 'password'
-app.config['MYSQL_DB'] = 'DR_2021'
+app.config['MYSQL_DB'] = 'DRdb_2021'
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 
 mysql = MySQL(app)
 
+assets = []
+
 
 @app.route('/')
-def main():
-    return render_template("index.html")
+def index():
+    return render_template('index.html')
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -45,7 +46,9 @@ def login():
                 session['username'] = username
 
                 flash('You are now logged in', 'success')
-                return redirect(url_for('main'))
+                print(session['username'])
+
+                return redirect(url_for('index'))
             else:
                 error = 'Invalid login'
                 return render_template('login.html', error=error)
@@ -72,6 +75,7 @@ def is_logged_in(f):
 @app.route('/logout')
 @is_logged_in
 def logout():
+    devs.clear()
     session.clear()
     flash('You are now logged out', 'success')
     return redirect(url_for('login'))
@@ -95,7 +99,7 @@ def register():
 
         cur = mysql.connection.cursor()
 
-        cur.execute("INSERT INTO users(username, password) VALUES(%s, %s)",
+        cur.execute("INSERT IGNORE INTO users(username, password) VALUES(%s, %s)",
                     (username, password))
 
         mysql.connection.commit()
@@ -108,160 +112,89 @@ def register():
     return render_template('register.html', form=form)
 
 
-class RiskForm(Form):
-    name = StringField('Name', [validators.Length(min=1, max=200)])
-    description = TextAreaField('Description')
-
-
-@app.route('/add_risk', methods=['GET', 'POST'])
-def add_risk():
-    form = RiskForm(request.form)
-
-    if request.method == 'POST' and form.validate():
-        name = form.name.data
-        description = form.description.data
-
-        conn = mysql.connection.cursor()
-
-        conn.execute("INSERT INTO risks(name, description) VALUES(%s, %s)",
-                     (name, description))
-
-        mysql.connection.commit()
-
-        conn.close()
-
-        flash('Sucs Added', 'success')
-
-        return redirect(url_for('risks'))
-
-    return render_template('add_risk.html', form=form)
-
-
-@app.route('/edit_risk/<string:id>', methods=['GET', 'POST'])
-@is_logged_in
-def edit_risk(id):
-    cur = mysql.connection.cursor()
-
-    result = cur.execute("SELECT * FROM risks WHERE id = %s", [id])
-
-    risk = cur.fetchone()
-    cur.close()
-
-    form = RiskForm(request.form)
-
-    name = form.name.data
-    description = form.description.data
-
-    if request.method == 'POST' and form.validate():
-        cur = mysql.connection.cursor()
-
-        cur.execute("UPDATE risks SET name =%s, description=%s WHERE id=%s", (name, description, id))
-
-        mysql.connection.commit()
-
-        cur.close()
-
-        flash('Risk Updated', 'success')
-
-        return redirect(url_for('risks'))
-
-    return render_template('edit_risk.html', form=form)
-
-
-@app.route('/delete/<string:id>', methods=['POST'])
-def delete_risk(id):
-
-    conn = mysql.connection.cursor()
-
-    conn.execute("DELETE FROM risks WHERE id = %s", [id])
-
-    mysql.connection.commit()
-
-    conn.close()
-
-    flash('Risk Deleted', 'success')
-
-    return redirect(url_for('risks'))
-
-
-@app.route('/risks')
-def risks():
-    conn = mysql.connection.cursor()
-
-    result = conn.execute("SELECT * FROM risks")
-
-    all_risks = conn.fetchall()
-
-    return render_template('risks.html', risks=all_risks)
-
-
-dev_groups = []
-
-
-@app.route('/create_group', methods=['GET', 'POST'])
-@is_logged_in
-def create_group():
-    conn = mysql.connection.cursor()
-
-    conn.execute("SELECT * FROM devices")
-
-    devs = conn.fetchall()
-
-    group = []
-
-    if request.method == 'POST':
-        group = request.form.getlist('mychek')
-        print(group[0])
-        dev_groups.append(group)
-        return render_template("groups.html", groups=dev_groups)
-
-    return render_template("create_group.html", devs=devs)
-
-
-@app.route('/edit_group', methods=['GET', 'POST'])
-@is_logged_in
-def edit_group():
-
-    return render_template("edit_group.html")
-
-
-@app.route('/group')
-@is_logged_in
-def group():
-    return render_template('group.html')
-
-
-@app.route('/groups', methods=['POST', 'GET'])
+@app.route('/groups', methods=['GET', 'POST'])
 @is_logged_in
 def groups():
-    return render_template('groups.html', groups=dev_groups)
+    return render_template('groups.html', assets=assets)
+
+
+@app.route('/create_group/<string:id>', methods=['GET', 'POST'])
+@is_logged_in
+def create_group(id):
+    conn = mysql.connection.cursor()
+
+    conn.execute("SELECT * FROM devices WHERE network_id=%s", [id])
+
+    devices = conn.fetchall()
+
+    conn.execute("SELECT * FROM risks")
+
+    risks = conn.fetchall()
+
+    if request.method == 'POST':
+        print("post1")
+        choosen_devices = request.form.getlist('associated_devices')
+
+        choosen_risks = request.form.getlist('associated_risks')
+
+        print(choosen_risks)
+
+        devices = []
+        for device in choosen_devices:
+            conn.execute("SELECT * FROM devices WHERE ip=%s", [device])
+            device = conn.fetchone()
+            #print(device)
+            devices.append(device)
+
+        risks = []
+        for risk in choosen_risks:
+            conn.execute("SELECT * FROM risks WHERE id=%s", [risk])
+            risk = conn.fetchone()
+            print(risk)
+            risks.append(risk)
+
+        group = {
+            "id": id,
+            "devices": devices,
+            "risks": risks
+        }
+
+        assets.append(group)
+
+        return redirect(url_for('groups', assets=assets))
+
+    return render_template("create_group.html", devices=devices, risks=risks)
 
 
 @app.route('/devices')
 @is_logged_in
 def devices():
+    result = []
     conn = mysql.connection.cursor()
 
-    #result = conn.execute("SELECT * FROM devices INNER JOIN networks ON net=address INNER JOIN users ON user=username WHERE user=%s", [session['username']])
-                          # WHERE address = %s", session['username'])
+    conn.execute("SELECT id FROM users WHERE username=%s", [session['username']])
 
-    result = conn.execute(
-        "SELECT * FROM devices INNER JOIN networks ON net=address INNER JOIN users ON user=username WHERE user=%s",
-        [session['username']])
+    user_id = conn.fetchone()
 
-    conn.execute("SELECT * FROM networks INNER JOIN users ON user=username WHERE user=%s", [session['username']])
+    conn.execute("SELECT * from networks WHERE user_id=%s", [user_id['id']])
 
-    devs = []
+    networks = conn.fetchall()
 
-    nets = conn.fetchall()
+    result = []
+    for net in networks:
 
-    for n in nets:
-        conn.execute("SELECT * FROM devices WHERE  net=%s", [n['address']])
-        d = conn.fetchall()
-        devs.append(d)
+        conn.execute("SELECT id FROM networks WHERE address=%s", [net['address']])
 
-    if len(devs) != 0:
-        return render_template('devices.html', devs=devs)
+        network_id = conn.fetchone()
+
+        conn.execute("SELECT * FROM devices WHERE network_id=%s", [network_id['id']])
+
+        devs = conn.fetchall()
+
+        result.append(devs)
+
+    if len(result) != 0:
+        return render_template('devices.html', devs=result)
 
     else:
         msg = "No devices found"
@@ -280,14 +213,22 @@ def scan_net(net):
 
     conn = mysql.connection.cursor()
 
-    for host in nmscan.all_hosts():
-        conn.execute("INSERT IGNORE INTO networks(address, user) VALUES(%s, %s)", (net, session['username']))
+    conn.execute("SELECT id FROM users WHERE username=%s", [session['username']])
 
+    user_id = conn.fetchone()
+
+    conn.execute("INSERT INTO networks(address, user_id) VALUES(%s, %s)", [net, user_id['id']])
+
+    conn.execute("SELECT id FROM networks WHERE address=%s", [net])
+
+    net_id = conn.fetchone()
+
+    print("net_id", net_id)
+
+    for host in nmscan.all_hosts():
         print(net, nmscan[host].hostname(), host)
 
-        conn.execute("INSERT INTO devices(ip, hostname, mac, os, net) VALUES(%s, %s, %s, %s, %s)", (host, nmscan[host].hostname(), 'unav', 'unav', net))
-
-        #conn.execute("SELECT * FROM devices ORDER_BY net")
+        conn.execute("INSERT INTO devices(ip, hostname, os, network_id) VALUES(%s, %s, %s, %s)", [host, nmscan[host].hostname(), 'unav', net_id['id']])
 
         mysql.connection.commit()
 
