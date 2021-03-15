@@ -1,17 +1,21 @@
-<div class="ui massive menu">
-  <a class="item" href="/">Welcome</a>
-  <a class="item" href="/devices">Devices</a>
-  <a class="item" href="/groups">Groups</a>
-  <a class="item" href="/risks">Risks</a>
+<nav class="ui container">
+    <h1 class="ui inverted header">Welcome</h1>
+
+        <div class="ui borderless inverted compact menu">
+              <a class="item" href="/">Home</a>
+              <a class="item" href="/devices">Devices</a>
+              <a class="item" href="/groups">Groups</a>
+              <a class="item" href="/risks">Risks</a>
 
 
-  <div class="right menu">
-      {% if session.logged_in %}
-          <a class="item" href="/logout">Logout</a>
-      {% else %}
-          <a class="item" href="login">Login</a>
-          <a class="item" href="/register">Register</a>
-      {% endif %}
+              <div class="right menu">
+                  {% if session.logged_in %}
+                      <a class="item" href="/logout">Logout</a>
+                  {% else %}
+                      <a class="item" href="login">Login</a>
+                      <a class="item" href="/register">Register</a>
+                  {% endif %}
 
-  </div>
-</div>
+              </div>
+        </div>
+</nav>
