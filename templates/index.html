@@ -1,25 +1,27 @@
 {% extends 'layout.html' %}
 
 {% block body %}
+  <body id="root">
+    <div class="ui inverted vertical center aligned segment">
+      {% include 'includes/_navbar.html'%}
 
-<div class="ui segment">
-
-	<h1 class="ui header">Imagine-a-Network</h1>
-	
-	<h3 class="ui header">Do whatever you want when you want to or...</h3>
-	
-	<br>
-
-    <button class="ui huge button">
-        <a href="scan">
-            Start scanning
-            <i class="right arrow icon"></i>
-        </a>
-    </button>
-
-</div>
-
+      <div class="ui content container">
+        <h1 class="ui inverted header">See what's happening on your network</h1>
+        <p>
+          ...by just clicking down below.
+        </p>
+        <div class="ui huge button">
+            <a href="/scan">
+            Start scanning...
+            </a>
+        </div>
+      </div>
+    </div>
 {% endblock %}
+
+
+
+
 
 
 

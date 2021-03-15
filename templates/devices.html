@@ -1,36 +1,35 @@
 {% extends 'layout.html' %}
 
 {% block body %}
+    {% include 'includes/_navbar.html'%}
+
   <h1>
       <small> Hello there, {{session.username}}</small>
   </h1>
 
   <hr>
   {% for dev in devs %}
-  <h2>Network {{ dev[0].net }}</h2>
+  <h2>
+    <a href="/create_group/{{  dev[0]['network_id'] }}">Network {{ dev[0]['network_id'] }}
+  </h2>
   <table class="ui table">
     <tr>
       <th>Name</th>
       <th>IP</th>
-      <th>MAC</th>
       <th>OS</th>
       <th></th>
       <th></th>
     </tr>
     {% for d in dev %}
       <tr>
-        <td>{{d.hostname}}</td>
-        <td>{{d.ip}}</td>
-        <td>{{d.mac}}</td>
-        <td>{{d.os}}</td>
+        <td>{{ d['hostname'] }}</td>
+        <td>{{ d['ip'] }}</td>
+        <td>{{ d['os'] }}</td>
         </td>
       </tr>
     {% endfor %}
   </table>
   <br>
   {% endfor %}
-    <a href="create_group" class="ui button">Create new group</a>
-
-    <a href="groups" class="ui button">Groups</a>
 
 {% endblock %}

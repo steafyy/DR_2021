@@ -1,12 +1,35 @@
 {% extends 'layout.html' %}
 
 {% block body %}
-    <form method="POST" action="/create_group">
-        {% for d in devs %}
-            {{ d.ip }}
-            <input type="checkbox" value={{ d.ip }} name="mychek">
+
+<h1>Creating group for {{ devices[0]['network_id'] }}</h1>
+    <form method="POST"  action="">
+        <h2>Select devices for the asset</h2>
+        {% for dev in devices %}
+            <small>
+            {{ dev ['hostname'] }}
+             <input type="checkbox" value={{ dev['ip'] }} name="associated_devices">
+            </small>
         {% endfor %}
-        <input type="submit" value="Create new group">
+
+        <h2>Select risks for the asset</h2>
+        {% for risk in risks %}
+            <small>
+            {{ risk.name }} <br> {{ risk['description'] }}
+                <div class="field">
+                    <input type="text" name="Impact" placeholder="impact" value={{request.form.impact}}>
+                </div>
+                <div class="field">
+                    <input type="text" name="possibility" placeholder="possibility" value={{request.form.possibility}}>
+                </div>
+             <input type="checkbox" value={{ risk.id }} name="associated_risks">
+            </small>
+            <h3>
+            
+            </h3>
+        {% endfor %}
+        <br>
+        <input type="submit" class="ui button" value="Create new group">
     </form>
 
 {% endblock %}

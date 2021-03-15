@@ -1,19 +1,30 @@
 {% extends 'layout.html' %}
 
 {% block body %}
-  {% from "includes/_formhelpers.html" import render_field %}
-  <h1>Register</h1>
-  <form method="POST" action="" class="ui form">
-    <div class="field">
-      {{render_field(form.username, class_="form-control")}}
-    </div>
-    <div class="field">
-      {{render_field(form.password, class_="form-control")}}
-    </div>
-    <div class="field">
-      {{render_field(form.confirm, class_="form-control")}}
-    </div>
-    <p><input type="submit" class="ui button" value="Submit"></p>
-  </form>
-
+ <div class="ui middle aligned center aligned grid">
+      <div class="column">
+        <h2 class="ui teal image header">
+            <i class="user secret icon"></i>
+            {% from "includes/_formhelpers.html" import render_field %}
+            <div class="content">Register</div>
+        </h2>
+      <form method="POST" action="" class="ui large form">
+          <div class="ui stacked segment">
+            <div class="field">
+                <i class="user icon"></i>
+                {{render_field(form.username, class_="form-control")}}
+            </div>
+            <div class="field">
+                <i class="lock icon"></i>
+              {{render_field(form.password, class_="form-control")}}
+            </div>
+            <div class="field">
+                <i class="lock icon"></i>
+              {{render_field(form.confirm, class_="form-control")}}
+            </div>
+            <p><input type="submit" class="ui button" value="Submit"></p>
+          </div>
+      </form>
+      </div>
+ </div>
 {% endblock %}
