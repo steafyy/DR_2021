@@ -1,8 +1,7 @@
 {% extends 'layout.html' %}
 
 {% block body %}
-
-    <table class="ui celled table">
+    <table class="ui celled inverted teal padded table">
       <thead>
         <tr><th>Name</th>
         <th>Description</th>
@@ -14,19 +13,18 @@
           <td data-label="Description">{{ risk.description }}</td>
         </tr>
         <td>
-          <button class="ui centered button"><a href="edit_risk/{{ risk.id }}">Edit risk</a></button>
+          <button class="ui centered button"><a href="edit_risk/{{ risk.id }}" style="color:dimgrey">Edit risk</a></button>
         </td>
         <td>
           <form action="{{url_for('delete_risk', id=risk.id)}}" method="post">
             <input type="hidden" name="_method" value="DELETE">
-            <input type="submit" value="Delete" class="btn btn-danger">
+            <input type="submit" value="Delete" class="ui button">
           </form>
         </td>
-        </tr>
       {% endfor %}
       </tbody>
     </table>
-
-    <button class="ui centered button"><a href="add_risk">Add risk</a></button>
+    <br>
+    <button class="ui centered button"><a href="add_risk" style="color:#000000">Add risk</a></button>
 
 {% endblock %}

@@ -4,22 +4,29 @@
 	<meta charset="utf-8">
 	<title>ScanurneT</title>
 
-	<link rel="stylesheet" type="text/css" href="static/index.css">
-    <link rel="stylesheet" type="text/css" href="static/login.css">
-
-
+	<link rel="stylesheet" type="text/css" href="/static/index.css">
+    <link rel="stylesheet" type="text/css" href="/static/login.css">
 
     <link rel="stylesheet" type="text/css"
           href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css">
 
 </head>
-<body>
+<body id="root">
 
-    {% include 'includes/_messages.html'%}
+    <div class="ui inverted vertical center aligned segment">
 
+        {% include 'includes/_messages.html'%}
 
-	{% block body %}
+        {% include 'includes/_navbar.html'%}
 
-    {% endblock %}
+        <div class="ui container" style="margin-top: 100px">
+
+            {% block body %}
+
+            {% endblock %}
+
+        </div>
+
+    </div>
 
 </body>

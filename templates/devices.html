@@ -1,35 +1,30 @@
 {% extends 'layout.html' %}
 
 {% block body %}
-    {% include 'includes/_navbar.html'%}
-
-  <h1>
-      <small> Hello there, {{session.username}}</small>
-  </h1>
-
-  <hr>
+<div class="ui container" style="margin-top: 100px">
   {% for dev in devs %}
-  <h2>
-    <a href="/create_group/{{  dev[0]['network_id'] }}">Network {{ dev[0]['network_id'] }}
+  <h2 class="ui teal image header">
+    Network {{ dev[0]['network_id'] }}
   </h2>
-  <table class="ui table">
+  <table class="ui inverted teal padded table">
     <tr>
+      <th>
+          <a href="/create_group/{{  dev[0]['network_id'] }}" style="color:rgb(51, 51, 51);">Network {{ dev[0]['network_id'] }}</a>
+      </th>
       <th>Name</th>
       <th>IP</th>
       <th>OS</th>
-      <th></th>
-      <th></th>
     </tr>
     {% for d in dev %}
       <tr>
+        <td></td>
         <td>{{ d['hostname'] }}</td>
         <td>{{ d['ip'] }}</td>
         <td>{{ d['os'] }}</td>
-        </td>
       </tr>
     {% endfor %}
   </table>
   <br>
   {% endfor %}
-
+</div>
 {% endblock %}

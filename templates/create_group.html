@@ -1,35 +1,57 @@
 {% extends 'layout.html' %}
 
 {% block body %}
+    <h1 class="ui teal header">Creating group for {{ devices[0]['network_id'] }}</h1>
+    <form action="" method="POST" class="ui large form">
 
-<h1>Creating group for {{ devices[0]['network_id'] }}</h1>
-    <form method="POST"  action="">
-        <h2>Select devices for the asset</h2>
-        {% for dev in devices %}
-            <small>
-            {{ dev ['hostname'] }}
-             <input type="checkbox" value={{ dev['ip'] }} name="associated_devices">
-            </small>
-        {% endfor %}
+        <div class="ui three column grid container">
+          <div class="six wide column">
+            <h2>Select devices for the asset</h2>
+            <div class="ui segment">
+                {% for dev in devices %}
+                    <h3>
+                        {{ dev['hostname'] }}
+                        <input type="checkbox" value={{ dev['ip'] }} name="associated_devices">
+                    </h3>
+                {% endfor %}
+            </div>
+          </div>
 
-        <h2>Select risks for the asset</h2>
-        {% for risk in risks %}
-            <small>
-            {{ risk.name }} <br> {{ risk['description'] }}
-                <div class="field">
-                    <input type="number" name="impact" placeholder="impact" value={{request.form.impact}}>
+          <div class="four wide column">
+
+          </div>
+
+          <div class="six wide column">
+              <h2>Select risks for the asset</h2>
+                <div class="ui segment">
+                    {% for risk in risks %}
+                        <h3>
+                            {{ risk.name }}
+                            <input type="checkbox" value={{ risk.id }} name="associated_risks">
+
+                            <div class="ui three column grid">
+                              <div class="seven wide column">
+                                    <input type="text" name="impact" placeholder="impact" value={{request.form.impact}}>
+
+                              </div>
+                              <div class="two wide column">
+
+                              </div>
+                              <div class="seven wide column">
+                                  <input type="text" name="possibility" placeholder="possibility" value={{request.form.possibility}}>
+
+                              </div>
+                            </div>
+
+                        </h3>
+                {% endfor %}
                 </div>
-                <div class="field">
-                    <input type="number" name="possibility" placeholder="possibility" value={{request.form.possibility}}>
-                </div>
-             <input type="checkbox" value={{ risk.id }} name="associated_risks">
-            </small>
-            <h3>
-            
-            </h3>
-        {% endfor %}
-        <br>
-        <input type="submit" class="ui button" value="Create new group">
+          </div>
+
+        </div>
+        <br><br><br>
+        <input type="submit" class="ui huge teal button" value="Create new group">
     </form>
+
 
 {% endblock %}
