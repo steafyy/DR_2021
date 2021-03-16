@@ -52,7 +52,7 @@ def login():
             else:
                 error = 'Invalid login'
                 return render_template('login.html', error=error)
-            # Close connection
+
             cur.close()
         else:
             error = 'Username not found'
@@ -146,9 +146,9 @@ def add_risk():
 def edit_risk(id):
     cur = mysql.connection.cursor()
 
-    result = cur.execute("SELECT * FROM risks WHERE id = %s", [id])
+    #cur.execute("SELECT * FROM risks WHERE id = %s", [id])
 
-    risk = cur.fetchone()
+    #risk = cur.fetchone()
     cur.close()
 
     form = RiskForm(request.form)
@@ -192,7 +192,7 @@ def delete_risk(id):
 def risks():
     conn = mysql.connection.cursor()
 
-    result = conn.execute("SELECT * FROM risks")
+    conn.execute("SELECT * FROM risks")
 
     all_risks = conn.fetchall()
 
@@ -202,6 +202,10 @@ def risks():
 @app.route('/groups', methods=['GET', 'POST'])
 @is_logged_in
 def groups():
+    #da se proveri userseseiqta
+    if len(assets) == 0:
+        msg = "No groups created"
+        return render_template("groups.html", msg=msg)
     return render_template('groups.html', assets=assets)
 
 
@@ -219,26 +223,20 @@ def create_group(id):
     risks = conn.fetchall()
 
     if request.method == 'POST':
-        #print("post1")
         choosen_devices = request.form.getlist('associated_devices')
 
         choosen_risks = request.form.getlist('associated_risks')
 
-        #evaluation = request.form.getlist('')
-
-        impact = request.form.getlist('impact')
+        impact = request.form.get('impact')
         print("impact", impact)
 
-        possibility = request.form.getlist('possibility')
+        possibility = request.form.get('possibility')
         print("possibility", possibility)
-
-        #print(choosen_risks)
 
         devices = []
         for device in choosen_devices:
             conn.execute("SELECT * FROM devices WHERE ip=%s", [device])
             device = conn.fetchone()
-            #print(device)
             devices.append(device)
 
         n = 0
@@ -247,8 +245,7 @@ def create_group(id):
             conn.execute("SELECT * FROM risks WHERE id=%s", [risk])
             risk = conn.fetchone()
 
-            #print(risk)
-            risk['evaluation'] = int(impact[n]) * int(possibility[n])
+            risk['evaluation'] = int(impact) * int(possibility)
             print(risk)
             risks.append(risk)
             n = n + 1
@@ -269,7 +266,6 @@ def create_group(id):
 @app.route('/devices')
 @is_logged_in
 def devices():
-    result = []
     conn = mysql.connection.cursor()
 
     conn.execute("SELECT id FROM users WHERE username=%s", [session['username']])
@@ -323,7 +319,6 @@ def scan_net(net):
 
     net_id = conn.fetchone()
 
-    #print("net_id", net_id)
 
     for host in nmscan.all_hosts():
         print(net, nmscan[host].hostname(), host)
