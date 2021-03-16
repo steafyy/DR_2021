@@ -75,7 +75,6 @@ def is_logged_in(f):
 @app.route('/logout')
 @is_logged_in
 def logout():
-    devs.clear()
     session.clear()
     flash('You are now logged out', 'success')
     return redirect(url_for('login'))
@@ -112,6 +111,94 @@ def register():
     return render_template('register.html', form=form)
 
 
+class RiskForm(Form):
+    name = StringField('Name', [validators.Length(min=1, max=200)])
+    description = TextAreaField('Description')
+
+
+@app.route('/add_risk', methods=['GET', 'POST'])
+@is_logged_in
+def add_risk():
+    form = RiskForm(request.form)
+
+    if request.method == 'POST' and form.validate():
+        name = form.name.data
+        description = form.description.data
+
+        conn = mysql.connection.cursor()
+
+        conn.execute("INSERT INTO risks(name, description) VALUES(%s, %s)",
+                     (name, description))
+
+        mysql.connection.commit()
+
+        conn.close()
+
+        flash('Sucs Added', 'success')
+
+        return redirect(url_for('risks'))
+
+    return render_template('add_risk.html', form=form)
+
+
+@app.route('/edit_risk/<string:id>', methods=['GET', 'POST'])
+@is_logged_in
+def edit_risk(id):
+    cur = mysql.connection.cursor()
+
+    result = cur.execute("SELECT * FROM risks WHERE id = %s", [id])
+
+    risk = cur.fetchone()
+    cur.close()
+
+    form = RiskForm(request.form)
+
+    name = form.name.data
+    description = form.description.data
+
+    if request.method == 'POST' and form.validate():
+        cur = mysql.connection.cursor()
+
+        cur.execute("UPDATE risks SET name =%s, description=%s WHERE id=%s", (name, description, id))
+
+        mysql.connection.commit()
+
+        cur.close()
+
+        flash('Risk Updated', 'success')
+
+        return redirect(url_for('risks'))
+
+    return render_template('edit_risk.html', form=form)
+
+
+@app.route('/delete/<string:id>', methods=['POST'])
+def delete_risk(id):
+
+    conn = mysql.connection.cursor()
+
+    conn.execute("DELETE FROM risks WHERE id = %s", [id])
+
+    mysql.connection.commit()
+
+    conn.close()
+
+    flash('Risk Deleted', 'success')
+
+    return redirect(url_for('risks'))
+
+
+@app.route('/risks')
+def risks():
+    conn = mysql.connection.cursor()
+
+    result = conn.execute("SELECT * FROM risks")
+
+    all_risks = conn.fetchall()
+
+    return render_template('risks.html', risks=all_risks)
+
+
 @app.route('/groups', methods=['GET', 'POST'])
 @is_logged_in
 def groups():
@@ -132,12 +219,20 @@ def create_group(id):
     risks = conn.fetchall()
 
     if request.method == 'POST':
-        print("post1")
+        #print("post1")
         choosen_devices = request.form.getlist('associated_devices')
 
         choosen_risks = request.form.getlist('associated_risks')
 
-        print(choosen_risks)
+        #evaluation = request.form.getlist('')
+
+        impact = request.form.getlist('impact')
+        print("impact", impact)
+
+        possibility = request.form.getlist('possibility')
+        print("possibility", possibility)
+
+        #print(choosen_risks)
 
         devices = []
         for device in choosen_devices:
@@ -146,12 +241,17 @@ def create_group(id):
             #print(device)
             devices.append(device)
 
+        n = 0
         risks = []
         for risk in choosen_risks:
             conn.execute("SELECT * FROM risks WHERE id=%s", [risk])
             risk = conn.fetchone()
+
+            #print(risk)
+            risk['evaluation'] = int(impact[n]) * int(possibility[n])
             print(risk)
             risks.append(risk)
+            n = n + 1
 
         group = {
             "id": id,
@@ -223,7 +323,7 @@ def scan_net(net):
 
     net_id = conn.fetchone()
 
-    print("net_id", net_id)
+    #print("net_id", net_id)
 
     for host in nmscan.all_hosts():
         print(net, nmscan[host].hostname(), host)
