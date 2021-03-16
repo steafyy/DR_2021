@@ -17,10 +17,10 @@
             <small>
             {{ risk.name }} <br> {{ risk['description'] }}
                 <div class="field">
-                    <input type="text" name="Impact" placeholder="impact" value={{request.form.impact}}>
+                    <input type="number" name="impact" placeholder="impact" value={{request.form.impact}}>
                 </div>
                 <div class="field">
-                    <input type="text" name="possibility" placeholder="possibility" value={{request.form.possibility}}>
+                    <input type="number" name="possibility" placeholder="possibility" value={{request.form.possibility}}>
                 </div>
              <input type="checkbox" value={{ risk.id }} name="associated_risks">
             </small>
